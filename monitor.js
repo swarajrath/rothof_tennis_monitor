@@ -1,0 +1,200 @@
+require('dotenv').config();
+const nodemailer = require('nodemailer');
+
+class RothofMonitor {
+  constructor(config) {
+    this.config = {
+      facilityId: 23288,
+      sport: 'tennis',
+      courtIds: [44656, 44657, 44658, 44920, 44921, 44922, 44644, 44645, 44646, 44647, 44643, 44648, 44649, 44650, 44651, 44652, 44653, 44654],
+      checkIntervalMinutes: config.checkIntervalMinutes || 5,
+      targetTimes: config.targetTimes || ['1800'], // e.g., ['1800', '1900']
+      daysAhead: config.daysAhead || 7,
+      ...config
+    };
+
+    this.previousState = new Map(); // Track previous availability
+    this.setupEmailTransporter();
+  }
+
+  setupEmailTransporter() {
+    // Configure email transporter
+    this.transporter = nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+  }
+
+  async checkAvailability(date) {
+    const dateStr = date.toISOString().split('T')[0];
+    const courtsParam = this.config.courtIds.map(id => `courts[]=${id}`).join('&');
+    const url = `https://www.eversports.de/widget/api/slot?facilityId=${this.config.facilityId}&sport=${this.config.sport}&startDate=${dateStr}&${courtsParam}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      return {
+        date: dateStr,
+        slots: data.slots || []
+      };
+    } catch (error) {
+      console.error(`Error fetching availability for ${dateStr}:`, error.message);
+      return { date: dateStr, slots: [] };
+    }
+  }
+
+  async checkAllDates() {
+    const results = [];
+    const today = new Date();
+
+    for (let i = 0; i < this.config.daysAhead; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() + i);
+
+      const availability = await this.checkAvailability(checkDate);
+      results.push(availability);
+
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    return results;
+  }
+
+  findNewlyAvailableSlots(currentData) {
+    const newlyAvailable = [];
+
+    for (const dayData of currentData) {
+      const { date, slots } = dayData;
+
+      // Filter for target times
+      const targetSlots = slots.filter(slot => {
+        return this.config.targetTimes.includes(slot.start) && !slot.booking;
+      });
+
+      for (const slot of targetSlots) {
+        const key = `${date}-${slot.start}-${slot.court}`;
+
+        // Check if this slot was previously unavailable (or not tracked)
+        const wasAvailable = this.previousState.get(key);
+
+        if (wasAvailable === false || wasAvailable === undefined) {
+          // This is a newly available slot!
+          newlyAvailable.push({
+            date,
+            time: slot.start,
+            court: slot.court,
+            key
+          });
+        }
+
+        // Update state
+        this.previousState.set(key, true);
+      }
+
+      // Also track unavailable slots
+      const unavailableSlots = slots.filter(slot => {
+        return this.config.targetTimes.includes(slot.start) && slot.booking;
+      });
+
+      for (const slot of unavailableSlots) {
+        const key = `${date}-${slot.start}-${slot.court}`;
+        this.previousState.set(key, false);
+      }
+    }
+
+    return newlyAvailable;
+  }
+
+  async sendNotification(newSlots) {
+    if (newSlots.length === 0) return;
+
+    const subject = `🎾 ${newSlots.length} Rothof Court${newSlots.length > 1 ? 's' : ''} Available!`;
+
+    let body = '<h2>New Court Availability at Rothof München</h2>\n\n';
+    body += '<ul>\n';
+
+    for (const slot of newSlots) {
+      const timeFormatted = `${slot.time.slice(0, 2)}:${slot.time.slice(2)}`;
+      body += `<li><strong>${slot.date}</strong> at <strong>${timeFormatted}</strong> - Court ${slot.court}</li>\n`;
+    }
+
+    body += '</ul>\n\n';
+    body += '<p><a href="https://rothof.de/online-buchen/">Book now at Rothof</a></p>';
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.NOTIFY_EMAIL || process.env.EMAIL_USER,
+      subject,
+      html: body
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`✅ Email sent: ${newSlots.length} new slot(s)`);
+    } catch (error) {
+      console.error('❌ Error sending email:', error.message);
+    }
+  }
+
+  formatTime(timeStr) {
+    return `${timeStr.slice(0, 2)}:${timeStr.slice(2)}`;
+  }
+
+  async runCheck() {
+    console.log(`\n🔍 Checking availability at ${new Date().toLocaleString()}...`);
+
+    const currentData = await this.checkAllDates();
+    const newlyAvailable = this.findNewlyAvailableSlots(currentData);
+
+    if (newlyAvailable.length > 0) {
+      console.log(`\n🎾 Found ${newlyAvailable.length} newly available slot(s):`);
+      newlyAvailable.forEach(slot => {
+        console.log(`   ${slot.date} at ${this.formatTime(slot.time)} - Court ${slot.court}`);
+      });
+
+      await this.sendNotification(newlyAvailable);
+    } else {
+      console.log('   No new slots available at target times.');
+    }
+
+    // Log summary
+    const totalAvailable = currentData.reduce((count, day) => {
+      return count + day.slots.filter(s =>
+        this.config.targetTimes.includes(s.start) && !s.booking
+      ).length;
+    }, 0);
+
+    console.log(`   Total available slots at target times: ${totalAvailable}`);
+  }
+
+  start() {
+    console.log('🚀 Rothof Court Monitor Started');
+    console.log(`   Monitoring times: ${this.config.targetTimes.map(t => this.formatTime(t)).join(', ')}`);
+    console.log(`   Check interval: ${this.config.checkIntervalMinutes} minutes`);
+    console.log(`   Days ahead: ${this.config.daysAhead}`);
+    console.log(`   Notification email: ${process.env.NOTIFY_EMAIL || process.env.EMAIL_USER}`);
+
+    // Run first check immediately
+    this.runCheck();
+
+    // Schedule recurring checks
+    this.interval = setInterval(
+      () => this.runCheck(),
+      this.config.checkIntervalMinutes * 60 * 1000
+    );
+  }
+
+  stop() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      console.log('🛑 Monitor stopped');
+    }
+  }
+}
+
+module.exports = RothofMonitor;
