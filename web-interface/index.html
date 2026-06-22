@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rothof Court Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1aaf42 0%, #0d7a2c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1aaf42;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="date"],
+        input[type="time"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="date"]:focus,
+        input[type="time"]:focus {
+            outline: none;
+            border-color: #1aaf42;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .radio-option label {
+            display: block;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            background: #1aaf42;
+            color: white;
+            border-color: #1aaf42;
+        }
+
+        .radio-option label:hover {
+            border-color: #1aaf42;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #1aaf42;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #0d7a2c;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .current-config {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .current-config h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .current-config p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .emoji {
+            font-size: 24px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎾 Rothof Court Monitor</h1>
+        <p class="subtitle">Get notified when courts become available</p>
+
+        <form id="configForm">
+            <div class="form-group">
+                <label for="date">📅 Date</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="time">🕐 Time</label>
+                <input type="time" id="time" name="time" required>
+            </div>
+
+            <div class="form-group">
+                <label>🏟️ Court Type</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="freiplatz" name="courtType" value="freiplatz" checked>
+                        <label for="freiplatz">
+                            <span class="emoji">🌤️</span><br>Freiplatz<br><small>(Outdoor)</small>
+                        </label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="halle" name="courtType" value="halle">
+                        <label for="halle">
+                            <span class="emoji">🏢</span><br>Halle<br><small>(Indoor)</small>
+                        </label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="all" name="courtType" value="all">
+                        <label for="all">
+                            <span class="emoji">🎾</span><br>All Courts
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">💾 Save & Start Monitoring</button>
+        </form>
+
+        <div id="status" class="status"></div>
+
+        <div class="current-config" id="currentConfig" style="display: none;">
+            <h3>Current Configuration:</h3>
+            <p><strong>Date:</strong> <span id="configDate"></span></p>
+            <p><strong>Time:</strong> <span id="configTime"></span></p>
+            <p><strong>Court Type:</strong> <span id="configCourtType"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').setAttribute('min', today);
+        document.getElementById('date').value = today;
+
+        // Set default time to 18:00
+        document.getElementById('time').value = '18:00';
+
+        // Load saved configuration
+        function loadConfig() {
+            const config = localStorage.getItem('rothofConfig');
+            if (config) {
+                const data = JSON.parse(config);
+                document.getElementById('date').value = data.date;
+                document.getElementById('time').value = data.time;
+                document.querySelector(`input[name="courtType"][value="${data.courtType}"]`).checked = true;
+
+                // Show current config
+                document.getElementById('currentConfig').style.display = 'block';
+                document.getElementById('configDate').textContent = new Date(data.date).toLocaleDateString();
+                document.getElementById('configTime').textContent = data.time;
+                document.getElementById('configCourtType').textContent = formatCourtType(data.courtType);
+            }
+        }
+
+        function formatCourtType(type) {
+            const map = {
+                'freiplatz': '🌤️  Freiplatz (Outdoor)',
+                'halle': '🏢 Halle (Indoor)',
+                'all': '🎾 All Courts'
+            };
+            return map[type] || type;
+        }
+
+        // Handle form submission
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const courtType = document.querySelector('input[name="courtType"]:checked').value;
+
+            const config = {
+                date: date,
+                time: time,
+                courtType: courtType,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            localStorage.setItem('rothofConfig', JSON.stringify(config));
+
+            // Also download as JSON file for local service
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rothof-config.json';
+            a.click();
+
+            // Show success message
+            const status = document.getElementById('status');
+            status.className = 'status success';
+            status.style.display = 'block';
+            status.innerHTML = '✅ Configuration saved! Download the config file and follow the instructions below.';
+
+            // Update current config display
+            document.getElementById('currentConfig').style.display = 'block';
+            document.getElementById('configDate').textContent = new Date(date).toLocaleDateString();
+            document.getElementById('configTime').textContent = time;
+            document.getElementById('configCourtType').textContent = formatCourtType(courtType);
+
+            // Show next steps after a moment
+            setTimeout(() => {
+                status.className = 'status info';
+                status.innerHTML = `
+                    <strong>Next Steps:</strong><br>
+                    1. Save the downloaded <code>rothof-config.json</code> to your rothof-monitor folder<br>
+                    2. Run: <code>node start-from-config.js</code><br>
+                    3. Keep the terminal window open!
+                `;
+            }, 2000);
+        });
+
+        // Load saved config on page load
+        loadConfig();
+    </script>
+</body>
+</html>
