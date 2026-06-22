@@ -2,11 +2,14 @@
   "name": "rothof-monitor",
   "version": "1.0.0",
   "description": "Monitor Rothof München court availability and get email notifications",
-  "main": "index.js",
+  "main": "start-from-config.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node start-from-config.js",
     "setup": "node setup.js",
     "test": "node test-api.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": ["rothof", "tennis", "booking", "monitor", "eversports"],
   "author": "",
