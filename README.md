@@ -2,9 +2,23 @@
 
 Monitor court availability at Rothof München and get email notifications when courts become free.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+## ✨ New: Web Interface!
 
-## 🚀 Deploy for 24/7 Monitoring
+Configure monitoring visually - no code editing needed!
+
+**Quick Start:**
+```bash
+cd ~/rothof-monitor/web-interface
+open index.html
+```
+
+Pick your date, time, and court type. Click Save. Run `node start-from-config.js`. Done! 🎉
+
+See **[QUICKSTART.md](QUICKSTART.md)** for detailed instructions.
+
+---
+
+## 🚀 Features
 
 ### Option 1: Render.com (Free, Easiest)
 
