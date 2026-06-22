@@ -1,28 +1,35 @@
-# ☁️ Deploy to Cloud - No Computer Needed!
+# 🚀 Deploy to Cloud - Complete Guide
 
-Your monitor will run 24/7 in the cloud and send you email notifications. Your Mac can be off!
+Deploy to the cloud so the monitor runs 24/7 and you just receive email notifications.
 
 ---
 
-## 🚀 Recommended: Railway.app (5 Minutes)
+## Quick Start: Railway.app (5 Minutes) ⭐ Recommended
 
-### Why Railway?
+**Why Railway?**
 - ✅ Easiest setup (5 minutes)
-- ✅ Free $5/month credit
+- ✅ Free $5/month credit (~3 months free)
 - ✅ Automatic deploys from GitHub
 - ✅ Simple dashboard
 
-### Quick Setup:
+### Step 1: Sign Up (1 min)
+1. Go to https://railway.app
+2. Click "Start a New Project"
+3. Sign in with GitHub
+4. Authorize Railway
 
-**1. Deploy**
-- Go to https://railway.app
-- Sign in with GitHub
-- Click "Deploy from GitHub repo"
-- Select `swarajrath/rothof_tennis_monitor`
+### Step 2: Deploy (1 min)
+1. Click "Deploy from GitHub repo"
+2. Select `swarajrath/rothof_tennis_monitor`
+3. Click "Deploy Now"
 
-**2. Configure**
+Railway automatically detects Node.js and starts building.
 
-Add these environment variables in Railway dashboard:
+### Step 3: Configure (2 min)
+
+Click your project → **"Variables"** tab
+
+Add these environment variables:
 
 ```
 EMAIL_SERVICE=gmail
@@ -34,88 +41,215 @@ MONITOR_TIME=19:00
 MONITOR_COURT_TYPE=freiplatz
 ```
 
-**Gmail App Password**: https://myaccount.google.com/apppasswords
+**Gmail App Password:**
+1. Go to https://myaccount.google.com/apppasswords
+2. Enable 2FA first
+3. Create app password for "Mail"
+4. Use the 16-character password (not your regular password)
 
-**3. Done!**
+### Step 4: Verify (1 min)
 
-Check logs to verify it's running. You'll get emails when courts are available!
+Go to **"Deployments"** → Click latest deployment → View **"Logs"**
+
+You should see:
+```
+📡 Using configuration from environment variables
+
+📋 Configuration loaded:
+   Date: 2026-06-24
+   Time: 19:00
+   Court Type: freiplatz
+
+🚀 Rothof Court Monitor Started
+   Target date: 2026-06-24
+   Target times: 19:00
+   Court filter: 🌤️  Freiplatz only
+   ...
+```
+
+### Done! 🎉
+
+- Monitor runs 24/7 in the cloud
+- You'll receive emails when courts become available
+- No computer needed
+
+**Cost**: ~$1.50/month (covered by free $5 credit for 3 months)
 
 ---
 
-## 📖 Detailed Guides
+## Alternative Options
 
-- **[RAILWAY-DEPLOYMENT.md](RAILWAY-DEPLOYMENT.md)** - Step-by-step Railway setup
-- **[CLOUD-DEPLOYMENT.md](CLOUD-DEPLOYMENT.md)** - All cloud options (Railway, Render, AWS, DigitalOcean)
+### Option 2: Render.com (Free Forever)
+
+**Pros**: Free forever  
+**Cons**: Spins down after 15 min idle
+
+1. Sign up at https://render.com
+2. New → "Background Worker"
+3. Connect repo: `swarajrath/rothof_tennis_monitor`
+4. Build Command: `npm install`
+5. Start Command: `node start-from-config.js`
+6. Add same environment variables as Railway
+7. Deploy
+
+### Option 3: AWS EC2 (Free 1 Year)
+
+**Pros**: Full control, free for 1 year  
+**Cons**: Complex setup
+
+1. **Launch Instance**
+   - Go to AWS Console → EC2
+   - Launch t2.micro (free tier)
+   - Ubuntu 22.04
+   - Download key pair
+
+2. **Connect**
+   ```bash
+   chmod 400 your-key.pem
+   ssh -i your-key.pem ubuntu@instance-ip
+   ```
+
+3. **Install Node.js**
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   sudo apt-get install -y nodejs git
+   ```
+
+4. **Clone & Setup**
+   ```bash
+   git clone https://github.com/swarajrath/rothof_tennis_monitor.git
+   cd rothof_tennis_monitor
+   npm install
+   ```
+
+5. **Configure**
+   ```bash
+   cat > .env << 'EOF'
+   EMAIL_SERVICE=gmail
+   EMAIL_USER=your@gmail.com
+   EMAIL_PASSWORD=your-app-password
+   NOTIFY_EMAIL=your@gmail.com
+   EOF
+
+   cat > rothof-config.json << 'EOF'
+   {
+     "date": "2026-06-24",
+     "time": "19:00",
+     "courtType": "freiplatz",
+     "timestamp": "2026-06-22T16:00:00.000Z"
+   }
+   EOF
+   ```
+
+6. **Setup as Service**
+   ```bash
+   sudo nano /etc/systemd/system/rothof-monitor.service
+   ```
+
+   Paste:
+   ```ini
+   [Unit]
+   Description=Rothof Court Monitor
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=ubuntu
+   WorkingDirectory=/home/ubuntu/rothof_tennis_monitor
+   ExecStart=/usr/bin/node start-from-config.js
+   Restart=always
+   RestartSec=10
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   Start:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable rothof-monitor
+   sudo systemctl start rothof-monitor
+   sudo systemctl status rothof-monitor
+   ```
 
 ---
 
-## Configuration Variables Explained
+## Configuration Variables
 
-| Variable | What | Example |
-|----------|------|---------|
-| `MONITOR_DATE` | Date to monitor | `2026-06-24` |
-| `MONITOR_TIME` | Time to monitor | `19:00` (7pm) |
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `MONITOR_DATE` | Date to monitor (YYYY-MM-DD) | `2026-06-24` |
+| `MONITOR_TIME` | Time to monitor (HH:MM) | `19:00` |
 | `MONITOR_COURT_TYPE` | Court filter | `freiplatz` / `halle` / `all` |
 | `EMAIL_SERVICE` | Email provider | `gmail` |
-| `EMAIL_USER` | Your email | `you@gmail.com` |
+| `EMAIL_USER` | Your email address | `you@gmail.com` |
 | `EMAIL_PASSWORD` | App password | `abcd efgh ijkl mnop` |
 | `NOTIFY_EMAIL` | Who gets notified | `you@gmail.com` |
 
 ---
 
-## Updating After Deployment
+## Updating Configuration
 
-Want to monitor a different date/time?
-
-**Railway/Render:**
+### Railway/Render:
 1. Go to dashboard
-2. Update environment variables
-3. Save (auto-restarts)
+2. Click on "Variables"
+3. Update `MONITOR_DATE`, `MONITOR_TIME`, or `MONITOR_COURT_TYPE`
+4. Save (auto-restarts)
 
-**AWS EC2:**
+### AWS EC2:
 ```bash
 ssh -i key.pem ubuntu@instance-ip
 cd rothof_tennis_monitor
-nano rothof-config.json  # Edit date/time
+nano rothof-config.json  # Edit date/time/courtType
 sudo systemctl restart rothof-monitor
+```
+
+---
+
+## Monitoring & Logs
+
+### Railway:
+Dashboard → Project → "Deployments" → Latest deployment → "Logs"
+
+### Render:
+Dashboard → Service → "Logs" tab
+
+### AWS EC2:
+```bash
+ssh -i key.pem ubuntu@instance-ip
+sudo journalctl -u rothof-monitor -f
 ```
 
 ---
 
 ## Cost Comparison
 
-| Platform | Cost | Free Period |
-|----------|------|-------------|
-| Railway | $1.50/mo | 3 months (free $5 credit) |
-| Render | Free | Forever (with limitations) |
-| AWS EC2 | $0 / $8 | Free 1 year, then $8/mo |
-| DigitalOcean | $4/mo | No free tier |
-
-**Recommendation**: Start with Railway (easiest + free credit)
-
----
-
-## What Happens When Running
-
-1. **Every 5 minutes**: Scrapes Rothof calendar for your date/time
-2. **Checks availability**: Counts available courts (filtered by type)
-3. **Detects changes**: When a court becomes newly available
-4. **Sends email**: "🎾 Court Available at Rothof!"
-5. **Repeats**: Continuously monitors 24/7
+| Platform | Monthly Cost | Free Period |
+|----------|--------------|-------------|
+| **Railway** | $1.50 | 3 months (free $5 credit) |
+| **Render** | Free | Forever (with limitations) |
+| **AWS EC2** | Free / $8 | Free 1 year, then $8/mo |
+| **DigitalOcean** | $4 | None |
 
 ---
 
 ## Troubleshooting
 
 **Not receiving emails?**
-- Check Gmail App Password (not regular password)
+- Check you're using Gmail App Password (not regular password)
 - Check spam folder
-- Verify environment variables in dashboard
+- Verify environment variables are set correctly
+- Check logs for errors
 
-**Monitor not running?**
-- Check deployment logs
-- Verify date format: `YYYY-MM-DD`
-- Verify time format: `HH:MM`
+**Monitor not starting?**
+- Check logs for errors
+- Verify date format: `YYYY-MM-DD` (e.g., `2026-06-24`)
+- Verify time format: `HH:MM` (e.g., `19:00`)
+- Ensure all environment variables are set
+
+**Puppeteer errors?**
+- Railway/Render handle this automatically
+- On AWS: Puppeteer installs Chrome automatically
 
 **Want to stop?**
 - Railway: Dashboard → Settings → Delete service
@@ -124,10 +258,27 @@ sudo systemctl restart rothof-monitor
 
 ---
 
+## What You'll Receive
+
+When a court becomes available, you'll get an email:
+
+**Subject**: 🎾 2 Rothof Courts Now Available!
+
+**Body**:
+- **June 24** at **19:00** - Court 44921
+- **June 24** at **19:00** - Court 44922
+
+[**Book Now!**]
+
+---
+
 ## Next Steps
 
-1. **Deploy** to Railway (5 min) - [RAILWAY-DEPLOYMENT.md](RAILWAY-DEPLOYMENT.md)
-2. **Configure** your email and monitoring preferences
-3. **Relax** - You'll get notified when courts are available!
+1. ⭐ **Deploy to Railway** (easiest, 5 min)
+2. Add your email credentials
+3. Set your monitoring date/time/court type
+4. Relax! You'll be notified when courts are available
+
+**Railway Dashboard**: https://railway.app/dashboard
 
 No more manual checking! 🎾📧

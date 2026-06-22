@@ -1,124 +1,151 @@
-# Rothof Tennis Court Monitor
+# 🎾 Rothof Tennis Court Monitor
 
-Monitor court availability at Rothof München and get email notifications when courts become free.
-
-## ☁️ Deploy to Cloud (Recommended)
-
-**Runs 24/7 without your computer!**
-
-### Quick Deploy to Railway.app (5 minutes):
-
-1. Go to https://railway.app
-2. Sign in with GitHub  
-3. Deploy from repo: `swarajrath/rothof_tennis_monitor`
-4. Add environment variables (email, date, time, court type)
-5. Done! Get notified via email 📧
-
-**Full Guide**: [RAILWAY-DEPLOYMENT.md](RAILWAY-DEPLOYMENT.md)
-
-**Other Options**: [CLOUD-DEPLOYMENT.md](CLOUD-DEPLOYMENT.md) (Render, AWS, DigitalOcean)
+Get email notifications when tennis courts become available at Rothof München.
 
 ---
 
-## 🖥️ Or Run Locally
+## ☁️ Quick Deploy (5 Minutes)
 
-### Web Interface (Easy)
+**Run 24/7 in the cloud without your computer!**
 
-Configure visually - no code editing needed!
+1. Go to https://railway.app
+2. Sign in with GitHub
+3. Deploy from repo: `swarajrath/rothof_tennis_monitor`
+4. Add environment variables:
+   ```
+   EMAIL_SERVICE=gmail
+   EMAIL_USER=your@gmail.com
+   EMAIL_PASSWORD=your-gmail-app-password
+   NOTIFY_EMAIL=your@gmail.com
+   MONITOR_DATE=2026-06-24
+   MONITOR_TIME=19:00
+   MONITOR_COURT_TYPE=freiplatz
+   ```
+5. Done! Get notified via email 📧
 
-```bash
-cd ~/rothof-monitor/web-interface
-open index.html
-```
+**Full Guide**: [DEPLOY.md](DEPLOY.md)
 
-Pick your date, time, and court type. Click Save. Run `node start-from-config.js`. Done! 🎉
+---
+
+## ✨ Features
+
+- 🎾 **Real-time monitoring** - Scrapes Eversports widget every 5 minutes
+- 📧 **Email notifications** - Get notified when courts become available
+- 🌤️ **Court filtering** - Monitor Freiplatz (outdoor) or Halle (indoor) only
+- ⏰ **Flexible scheduling** - Pick any date and time to monitor
+- ☁️ **Cloud deployment** - Runs 24/7 without your computer
+- 🎨 **Web interface** - Easy configuration (no code editing)
+
+---
+
+## 🖥️ Local Setup (Alternative)
+
+Run on your computer instead of the cloud:
+
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/swarajrath/rothof_tennis_monitor.git
+   cd rothof_tennis_monitor
+   npm install
+   ```
+
+2. **Configure via web interface**
+   ```bash
+   cd web-interface
+   open index.html
+   ```
+   - Pick date, time, court type
+   - Click "Save"
+   - Move downloaded `rothof-config.json` to project root
+
+3. **Setup email**
+   ```bash
+   cp .env.example .env
+   nano .env  # Add your email credentials
+   ```
+
+4. **Start monitoring**
+   ```bash
+   node start-from-config.js
+   ```
 
 **Full Guide**: [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
-## 🚀 Features
-
-### Option 2: Railway.app (Free $5 credit)
-
-1. Go to [railway.app](https://railway.app)
-2. Deploy from GitHub repo
-3. Add environment variables
-4. Done!
-
-### Option 3: Your Computer (macOS)
-
-```bash
-cd ~/rothof-monitor
-node setup.js  # Configure once
-npm start      # Or see DEPLOYMENT.md for background service
-```
-
-**See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guides (AWS, Raspberry Pi, DigitalOcean, etc.)**
-
-## 💻 Local Development
-
-```bash
-git clone https://github.com/swarajrath/rothof_tennis_monitor.git
-cd rothof_tennis_monitor
-npm install
-node setup.js
-npm start
-```
-
-## ⚙️ Environment Variables
-
-Required for cloud deployment:
-
-```env
-EMAIL_SERVICE=gmail
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-NOTIFY_EMAIL=your-email@gmail.com
-```
-
-**Gmail users:** Create an App Password at https://myaccount.google.com/apppasswords
-
-## ✨ Features
-
-- 🎾 Monitors Rothof München courts via Eversports API
-- ⏰ Configurable times (default: 18:00, 19:00, 20:00)
-- 📧 Email alerts when courts become available
-- 🔄 Checks every 5 minutes (configurable)
-- 🎯 Smart notifications (no spam)
-
-## 🛠️ Configuration
-
-Edit `index.js`:
-
-```javascript
-const monitor = new RothofMonitor({
-  checkIntervalMinutes: 5,               // How often to check
-  targetTimes: ['1800', '1900', '2000'], // Times to monitor
-  daysAhead: 7                           // Days to look ahead
-});
-```
-
-## 📝 Commands
-
-```bash
-npm start       # Start monitoring
-npm test        # Test API connection
-npm run setup   # Configure email settings
-```
-
 ## 📖 Documentation
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deploy for 24/7 monitoring (AWS, Render, Railway, etc.)
-- **[USAGE.md](USAGE.md)** - Detailed usage guide
-- **[README-FULL.md](README-FULL.md)** - Complete technical docs
+- **[DEPLOY.md](DEPLOY.md)** - Cloud deployment (Railway, Render, AWS)
+- **[QUICKSTART.md](QUICKSTART.md)** - Local setup guide
+- **[COURT-TYPES.md](COURT-TYPES.md)** - Court IDs and filtering
 
-## 🐛 Troubleshooting
+---
 
-**No emails?** Use Gmail App Password, check spam folder, verify `.env`
+## 🏟️ Court Types
 
-**API errors?** Run `npm test`, check Eversports is accessible
+- **Freiplatz (Outdoor)** - 12 courts (Platz 7-18)
+- **Halle (Indoor)** - 6 courts (Platz 1-6)
 
-## 📄 License
+Filter by type:
+- `freiplatz` - Outdoor only
+- `halle` - Indoor only
+- `all` - All courts
+
+---
+
+## 💰 Cost
+
+### Cloud Options:
+- **Railway**: Free for 3 months ($5 credit), then ~$1.50/month
+- **Render**: Free forever (with limitations)
+- **AWS EC2**: Free for 1 year, then ~$8/month
+
+### Local:
+- Free (your computer must stay on)
+
+---
+
+## 🔧 How It Works
+
+1. **Every 5 minutes**: Scrapes Rothof's Eversports booking calendar
+2. **Checks availability**: For your specified date, time, and court type
+3. **Detects changes**: When a court becomes newly available
+4. **Sends email**: "🎾 Court Available at Rothof!"
+5. **Repeats**: Continuously monitors 24/7
+
+---
+
+## 📧 Example Notification
+
+**Subject**: 🎾 2 Rothof Courts Now Available!
+
+**Body**:
+- **June 24** at **19:00** - Court 44921 (Freiplatz)
+- **June 24** at **19:00** - Court 44922 (Freiplatz)
+
+[**Book Now!**]
+
+---
+
+## 🛠️ Tech Stack
+
+- **Node.js** - Runtime
+- **Puppeteer** - Headless browser for scraping
+- **Nodemailer** - Email notifications
+- **Eversports** - Rothof's booking system
+
+---
+
+## 📝 License
 
 MIT
+
+---
+
+## 🤝 Contributing
+
+Issues and pull requests welcome!
+
+---
+
+**Get started**: [DEPLOY.md](DEPLOY.md) for cloud or [QUICKSTART.md](QUICKSTART.md) for local setup.
