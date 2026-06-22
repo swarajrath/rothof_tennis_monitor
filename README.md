@@ -1,144 +1,99 @@
-# Rothof Court Availability Monitor
+# Rothof Tennis Court Monitor
 
-Monitors court availability at Rothof München and sends email notifications when courts become free at your target times.
+Monitor court availability at Rothof München and get email notifications when courts become free.
 
-## Quick Start
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+
+## 🚀 Deploy for 24/7 Monitoring
+
+### Option 1: Render.com (Free, Easiest)
+
+1. Sign up at [render.com](https://render.com)
+2. New → Background Worker
+3. Connect repo: `swarajrath/rothof_tennis_monitor`
+4. Add environment variables (see below)
+5. Deploy!
+
+### Option 2: Railway.app (Free $5 credit)
+
+1. Go to [railway.app](https://railway.app)
+2. Deploy from GitHub repo
+3. Add environment variables
+4. Done!
+
+### Option 3: Your Computer (macOS)
 
 ```bash
-# 1. Install dependencies
+cd ~/rothof-monitor
+node setup.js  # Configure once
+npm start      # Or see DEPLOYMENT.md for background service
+```
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guides (AWS, Raspberry Pi, DigitalOcean, etc.)**
+
+## 💻 Local Development
+
+```bash
+git clone https://github.com/swarajrath/rothof_tennis_monitor.git
+cd rothof_tennis_monitor
 npm install
-
-# 2. Run setup wizard (interactive)
 node setup.js
-
-# 3. Start monitoring
 npm start
 ```
 
-That's it! You'll receive emails when courts become available at your target times.
+## ⚙️ Environment Variables
 
-## Features
+Required for cloud deployment:
 
-- 🎾 Monitors tennis court availability at Rothof München via Eversports API
-- ⏰ Configurable target times (e.g., 18:00, 19:00, 20:00)
-- 📧 Email notifications when courts become newly available
-- 🔄 Runs continuously with configurable check intervals
-- 🎯 Only notifies about newly available slots (no spam)
-
-## Setup
-
-### Quick Setup (Recommended)
-
-Run the interactive setup wizard:
-```bash
-node setup.js
+```env
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+NOTIFY_EMAIL=your-email@gmail.com
 ```
 
-This will guide you through email configuration and monitoring preferences.
+**Gmail users:** Create an App Password at https://myaccount.google.com/apppasswords
 
-### Manual Setup
+## ✨ Features
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+- 🎾 Monitors Rothof München courts via Eversports API
+- ⏰ Configurable times (default: 18:00, 19:00, 20:00)
+- 📧 Email alerts when courts become available
+- 🔄 Checks every 5 minutes (configurable)
+- 🎯 Smart notifications (no spam)
 
-2. **Configure email settings:**
-   - Copy `.env.example` to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Edit `.env` and add your email credentials
+## 🛠️ Configuration
 
-   **For Gmail users:**
-   - Go to Google Account → Security
-   - Enable 2-factor authentication
-   - Generate an "App Password" for this application
-   - Use the app password (not your regular password) in `.env`
+Edit `index.js`:
 
-3. **Customize monitoring settings** (optional):
-   Edit `index.js` to change:
-   - `checkIntervalMinutes`: How often to check (default: 5 minutes)
-   - `targetTimes`: Which times to monitor (default: 1800, 1900, 2000)
-   - `daysAhead`: How many days to check (default: 7)
-
-## Usage
-
-**Start monitoring:**
-```bash
-npm start
-# or
-node index.js
-```
-
-**Test API connection (optional):**
-```bash
-npm test
-```
-
-The monitor will:
-- Check availability every 5 minutes (configurable)
-- Send email when a court becomes free at your target times
-- Continue running until you stop it (Ctrl+C)
-
-**Run in background:**
-```bash
-# macOS/Linux
-nohup node index.js > monitor.log 2>&1 &
-
-# To stop:
-pkill -f "node index.js"
-```
-
-**Run as a service (recommended for 24/7 monitoring):**
-
-On macOS, create a LaunchAgent. On Linux, create a systemd service.
-
-## How It Works
-
-1. Polls the Eversports API every N minutes
-2. Checks next 7 days for availability at target times
-3. Compares current availability with previous state
-4. Sends email notification when a previously unavailable slot becomes free
-5. Only notifies once per newly available slot (no repeated notifications)
-
-## API Details
-
-- **Facility**: Rothof München (ID: 23288)
-- **Sport**: Tennis
-- **Courts**: 18 courts monitored
-- **Data Source**: Eversports widget API
-
-## Troubleshooting
-
-**No emails received:**
-- Check your `.env` file has correct credentials
-- For Gmail, ensure you're using an App Password (not regular password)
-- Check spam folder
-- Look at console output for error messages
-
-**Rate limiting:**
-- The app includes 500ms delays between API calls
-- Default 5-minute check interval is conservative
-- Reduce `checkIntervalMinutes` carefully if needed
-
-## Configuration Examples
-
-**Monitor only 18:00:**
 ```javascript
-targetTimes: ['1800']
+const monitor = new RothofMonitor({
+  checkIntervalMinutes: 5,               // How often to check
+  targetTimes: ['1800', '1900', '2000'], // Times to monitor
+  daysAhead: 7                           // Days to look ahead
+});
 ```
 
-**Check every 2 minutes:**
-```javascript
-checkIntervalMinutes: 2
+## 📝 Commands
+
+```bash
+npm start       # Start monitoring
+npm test        # Test API connection
+npm run setup   # Configure email settings
 ```
 
-**Monitor prime evening times:**
-```javascript
-targetTimes: ['1700', '1730', '1800', '1830', '1900', '1930', '2000']
-```
+## 📖 Documentation
 
-## License
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deploy for 24/7 monitoring (AWS, Render, Railway, etc.)
+- **[USAGE.md](USAGE.md)** - Detailed usage guide
+- **[README-FULL.md](README-FULL.md)** - Complete technical docs
+
+## 🐛 Troubleshooting
+
+**No emails?** Use Gmail App Password, check spam folder, verify `.env`
+
+**API errors?** Run `npm test`, check Eversports is accessible
+
+## 📄 License
 
 MIT

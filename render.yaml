@@ -1,0 +1,15 @@
+services:
+  - type: worker
+    name: rothof-monitor
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: EMAIL_SERVICE
+        value: gmail
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: NOTIFY_EMAIL
+        sync: false
