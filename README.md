@@ -2,11 +2,30 @@
 
 Monitor court availability at Rothof München and get email notifications when courts become free.
 
-## ✨ New: Web Interface!
+## ☁️ Deploy to Cloud (Recommended)
 
-Configure monitoring visually - no code editing needed!
+**Runs 24/7 without your computer!**
 
-**Quick Start:**
+### Quick Deploy to Railway.app (5 minutes):
+
+1. Go to https://railway.app
+2. Sign in with GitHub  
+3. Deploy from repo: `swarajrath/rothof_tennis_monitor`
+4. Add environment variables (email, date, time, court type)
+5. Done! Get notified via email 📧
+
+**Full Guide**: [RAILWAY-DEPLOYMENT.md](RAILWAY-DEPLOYMENT.md)
+
+**Other Options**: [CLOUD-DEPLOYMENT.md](CLOUD-DEPLOYMENT.md) (Render, AWS, DigitalOcean)
+
+---
+
+## 🖥️ Or Run Locally
+
+### Web Interface (Easy)
+
+Configure visually - no code editing needed!
+
 ```bash
 cd ~/rothof-monitor/web-interface
 open index.html
@@ -14,19 +33,11 @@ open index.html
 
 Pick your date, time, and court type. Click Save. Run `node start-from-config.js`. Done! 🎉
 
-See **[QUICKSTART.md](QUICKSTART.md)** for detailed instructions.
+**Full Guide**: [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
 ## 🚀 Features
-
-### Option 1: Render.com (Free, Easiest)
-
-1. Sign up at [render.com](https://render.com)
-2. New → Background Worker
-3. Connect repo: `swarajrath/rothof_tennis_monitor`
-4. Add environment variables (see below)
-5. Deploy!
 
 ### Option 2: Railway.app (Free $5 credit)
 
