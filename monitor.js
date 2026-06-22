@@ -14,6 +14,7 @@ class RothofMonitor {
     };
 
     this.previousState = new Map(); // Track previous availability
+    this.isFirstRun = true; // Skip notifications on first run
     this.setupEmailTransporter();
   }
 
@@ -79,10 +80,11 @@ class RothofMonitor {
       for (const slot of targetSlots) {
         const key = `${date}-${slot.start}-${slot.court}`;
 
-        // Check if this slot was previously unavailable (or not tracked)
+        // Check if this slot was previously unavailable
         const wasAvailable = this.previousState.get(key);
 
-        if (wasAvailable === false || wasAvailable === undefined) {
+        // Only notify if it was previously tracked as unavailable (not undefined)
+        if (wasAvailable === false) {
           // This is a newly available slot!
           newlyAvailable.push({
             date,
@@ -178,6 +180,7 @@ class RothofMonitor {
     console.log(`   Check interval: ${this.config.checkIntervalMinutes} minutes`);
     console.log(`   Days ahead: ${this.config.daysAhead}`);
     console.log(`   Notification email: ${process.env.NOTIFY_EMAIL || process.env.EMAIL_USER}`);
+    console.log(`   ⚠️  First run will NOT send notifications (building baseline state)\n`);
 
     // Run first check immediately
     this.runCheck();

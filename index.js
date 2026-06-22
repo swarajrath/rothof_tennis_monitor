@@ -2,8 +2,8 @@ const RothofMonitor = require('./monitor');
 
 // Configuration
 const monitor = new RothofMonitor({
-  checkIntervalMinutes: 5,           // Check every 5 minutes
-  targetTimes: ['1800', '1900', '2000'], // 6pm, 7pm, 8pm
+  checkIntervalMinutes: 4,           // Check every 5 minutes
+  targetTimes: ['1800', '1900'], // 6pm, 7pm, 8pm
   daysAhead: 7                       // Check next 7 days
 });
 
