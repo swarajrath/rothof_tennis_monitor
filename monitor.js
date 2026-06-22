@@ -9,6 +9,7 @@ class RothofMonitor {
       courtIds: [44656, 44657, 44658, 44920, 44921, 44922, 44644, 44645, 44646, 44647, 44643, 44648, 44649, 44650, 44651, 44652, 44653, 44654],
       checkIntervalMinutes: config.checkIntervalMinutes || 5,
       targetTimes: config.targetTimes || ['1800'], // e.g., ['1800', '1900']
+      targetDates: config.targetDates || null,     // e.g., ['2026-06-23', '2026-06-24']
       daysAhead: config.daysAhead || 7,
       ...config
     };
@@ -55,9 +56,13 @@ class RothofMonitor {
   findNewlyAvailableSlots(slots) {
     const newlyAvailable = [];
 
-    // Filter for target times
-    const targetSlots = slots.filter(slot => {
-      return this.config.targetTimes.includes(slot.start) && !slot.booking;
+    // Filter for target times and optionally target dates
+    let targetSlots = slots.filter(slot => {
+      const matchesTime = this.config.targetTimes.includes(slot.start);
+      const matchesDate = !this.config.targetDates || this.config.targetDates.includes(slot.date);
+      const isAvailable = !slot.booking;
+
+      return matchesTime && matchesDate && isAvailable;
     });
 
     for (const slot of targetSlots) {
@@ -83,7 +88,10 @@ class RothofMonitor {
 
     // Also track unavailable slots
     const unavailableSlots = slots.filter(slot => {
-      return this.config.targetTimes.includes(slot.start) && slot.booking;
+      const matchesTime = this.config.targetTimes.includes(slot.start);
+      const matchesDate = !this.config.targetDates || this.config.targetDates.includes(slot.date);
+
+      return matchesTime && matchesDate && slot.booking;
     });
 
     for (const slot of unavailableSlots) {
@@ -147,9 +155,11 @@ class RothofMonitor {
     }
 
     // Log summary
-    const totalAvailable = slots.filter(s =>
-      this.config.targetTimes.includes(s.start) && !s.booking
-    ).length;
+    const totalAvailable = slots.filter(s => {
+      const matchesTime = this.config.targetTimes.includes(s.start);
+      const matchesDate = !this.config.targetDates || this.config.targetDates.includes(s.date);
+      return matchesTime && matchesDate && !s.booking;
+    }).length;
 
     console.log(`   Total available slots at target times: ${totalAvailable}`);
   }
@@ -157,8 +167,12 @@ class RothofMonitor {
   start() {
     console.log('🚀 Rothof Court Monitor Started');
     console.log(`   Monitoring times: ${this.config.targetTimes.map(t => this.formatTime(t)).join(', ')}`);
+    if (this.config.targetDates) {
+      console.log(`   Monitoring dates: ${this.config.targetDates.join(', ')}`);
+    } else {
+      console.log(`   Monitoring: Next ${this.config.daysAhead} days`);
+    }
     console.log(`   Check interval: ${this.config.checkIntervalMinutes} minutes`);
-    console.log(`   Days ahead: ${this.config.daysAhead}`);
     console.log(`   Notification email: ${process.env.NOTIFY_EMAIL || process.env.EMAIL_USER}`);
     console.log(`   ⚠️  First run will NOT send notifications (building baseline state)\n`);
 
