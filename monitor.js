@@ -29,8 +29,9 @@ class RothofMonitor {
     });
   }
 
-  async checkAvailability(date) {
-    const dateStr = date.toISOString().split('T')[0];
+  async checkAvailability() {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
     const courtsParam = this.config.courtIds.map(id => `courts[]=${id}`).join('&');
     const url = `https://www.eversports.de/widget/api/slot?facilityId=${this.config.facilityId}&sport=${this.config.sport}&startDate=${dateStr}&${courtsParam}`;
 
@@ -38,75 +39,56 @@ class RothofMonitor {
       const response = await fetch(url);
       const data = await response.json();
 
-      return {
-        date: dateStr,
-        slots: data.slots || []
-      };
+      // API returns 7 days of data in one call
+      return data.slots || [];
     } catch (error) {
-      console.error(`Error fetching availability for ${dateStr}:`, error.message);
-      return { date: dateStr, slots: [] };
+      console.error(`Error fetching availability:`, error.message);
+      return [];
     }
   }
 
   async checkAllDates() {
-    const results = [];
-    const today = new Date();
-
-    for (let i = 0; i < this.config.daysAhead; i++) {
-      const checkDate = new Date(today);
-      checkDate.setDate(today.getDate() + i);
-
-      const availability = await this.checkAvailability(checkDate);
-      results.push(availability);
-
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    return results;
+    // Single API call returns all days (7 days from startDate)
+    return await this.checkAvailability();
   }
 
-  findNewlyAvailableSlots(currentData) {
+  findNewlyAvailableSlots(slots) {
     const newlyAvailable = [];
 
-    for (const dayData of currentData) {
-      const { date, slots } = dayData;
+    // Filter for target times
+    const targetSlots = slots.filter(slot => {
+      return this.config.targetTimes.includes(slot.start) && !slot.booking;
+    });
 
-      // Filter for target times
-      const targetSlots = slots.filter(slot => {
-        return this.config.targetTimes.includes(slot.start) && !slot.booking;
-      });
+    for (const slot of targetSlots) {
+      const key = `${slot.date}-${slot.start}-${slot.court}`;
 
-      for (const slot of targetSlots) {
-        const key = `${date}-${slot.start}-${slot.court}`;
+      // Check if this slot was previously unavailable
+      const wasAvailable = this.previousState.get(key);
 
-        // Check if this slot was previously unavailable
-        const wasAvailable = this.previousState.get(key);
-
-        // Only notify if it was previously tracked as unavailable (not undefined)
-        if (wasAvailable === false) {
-          // This is a newly available slot!
-          newlyAvailable.push({
-            date,
-            time: slot.start,
-            court: slot.court,
-            key
-          });
-        }
-
-        // Update state
-        this.previousState.set(key, true);
+      // Only notify if it was previously tracked as unavailable (not undefined)
+      if (wasAvailable === false) {
+        // This is a newly available slot!
+        newlyAvailable.push({
+          date: slot.date,
+          time: slot.start,
+          court: slot.court,
+          key
+        });
       }
 
-      // Also track unavailable slots
-      const unavailableSlots = slots.filter(slot => {
-        return this.config.targetTimes.includes(slot.start) && slot.booking;
-      });
+      // Update state
+      this.previousState.set(key, true);
+    }
 
-      for (const slot of unavailableSlots) {
-        const key = `${date}-${slot.start}-${slot.court}`;
-        this.previousState.set(key, false);
-      }
+    // Also track unavailable slots
+    const unavailableSlots = slots.filter(slot => {
+      return this.config.targetTimes.includes(slot.start) && slot.booking;
+    });
+
+    for (const slot of unavailableSlots) {
+      const key = `${slot.date}-${slot.start}-${slot.court}`;
+      this.previousState.set(key, false);
     }
 
     return newlyAvailable;
@@ -150,8 +132,8 @@ class RothofMonitor {
   async runCheck() {
     console.log(`\n🔍 Checking availability at ${new Date().toLocaleString()}...`);
 
-    const currentData = await this.checkAllDates();
-    const newlyAvailable = this.findNewlyAvailableSlots(currentData);
+    const slots = await this.checkAllDates();
+    const newlyAvailable = this.findNewlyAvailableSlots(slots);
 
     if (newlyAvailable.length > 0) {
       console.log(`\n🎾 Found ${newlyAvailable.length} newly available slot(s):`);
@@ -165,11 +147,9 @@ class RothofMonitor {
     }
 
     // Log summary
-    const totalAvailable = currentData.reduce((count, day) => {
-      return count + day.slots.filter(s =>
-        this.config.targetTimes.includes(s.start) && !s.booking
-      ).length;
-    }, 0);
+    const totalAvailable = slots.filter(s =>
+      this.config.targetTimes.includes(s.start) && !s.booking
+    ).length;
 
     console.log(`   Total available slots at target times: ${totalAvailable}`);
   }
