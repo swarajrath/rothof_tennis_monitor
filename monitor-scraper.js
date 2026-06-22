@@ -9,7 +9,14 @@ class RothofMonitor {
       targetDate: config.targetDate, // e.g., '2026-06-23'
       targetTimes: config.targetTimes || ['1800'],
       notifyEmail: process.env.NOTIFY_EMAIL || process.env.EMAIL_USER,
+      courtFilter: config.courtFilter || 'all', // 'all', 'freiplatz', 'halle'
       ...config
+    };
+
+    // Court type definitions
+    this.courtTypes = {
+      halle: [44656, 44657, 44658, 44920, 44921, 44922],
+      freiplatz: [44644, 44645, 44646, 44647, 44643, 44648, 44649, 44650, 44651, 44652, 44653, 44654]
     };
 
     this.scraper = new RothofWebScraper();
@@ -41,7 +48,15 @@ class RothofMonitor {
   findNewlyAvailable(current) {
     const newlyAvailable = [];
 
-    current.forEach(slot => {
+    // Apply court filter
+    let filtered = current;
+    if (this.config.courtFilter === 'freiplatz') {
+      filtered = current.filter(slot => this.courtTypes.freiplatz.includes(parseInt(slot.courtId)));
+    } else if (this.config.courtFilter === 'halle') {
+      filtered = current.filter(slot => this.courtTypes.halle.includes(parseInt(slot.courtId)));
+    }
+
+    filtered.forEach(slot => {
       const key = `${slot.date}-${slot.time}-${slot.courtId}`;
       const wasAvailable = this.previousState.get(key);
 
@@ -91,8 +106,16 @@ class RothofMonitor {
       const availability = await this.checkAvailability();
       const newlyAvailable = this.findNewlyAvailable(availability);
 
-      const available = availability.filter(s => s.available);
-      const booked = availability.filter(s => !s.available);
+      // Apply filter for display
+      let displayAvailability = availability;
+      if (this.config.courtFilter === 'freiplatz') {
+        displayAvailability = availability.filter(s => this.courtTypes.freiplatz.includes(parseInt(s.courtId)));
+      } else if (this.config.courtFilter === 'halle') {
+        displayAvailability = availability.filter(s => this.courtTypes.halle.includes(parseInt(s.courtId)));
+      }
+
+      const available = displayAvailability.filter(s => s.available);
+      const booked = displayAvailability.filter(s => !s.available);
 
       console.log(`   Available: ${available.length} courts`);
       console.log(`   Booked: ${booked.length} courts`);
@@ -116,6 +139,7 @@ class RothofMonitor {
     console.log('🚀 Rothof Court Monitor Started (Web Scraper Mode)');
     console.log(`   Target date: ${this.config.targetDate}`);
     console.log(`   Target times: ${this.config.targetTimes.map(t => t.slice(0,2)+':'+t.slice(2)).join(', ')}`);
+    console.log(`   Court filter: ${this.config.courtFilter === 'freiplatz' ? '🌤️  Freiplatz only' : this.config.courtFilter === 'halle' ? '🏢 Halle only' : '🎾 All courts'}`);
     console.log(`   Check interval: ${this.config.checkIntervalMinutes} minutes`);
     console.log(`   Notification email: ${this.config.notifyEmail}`);
     console.log(`   ⚠️  Using Puppeteer web scraper (slower but accurate)\n`);
