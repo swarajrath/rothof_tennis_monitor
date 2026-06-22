@@ -2,6 +2,21 @@
 
 Monitors court availability at Rothof München and sends email notifications when courts become free at your target times.
 
+## Quick Start
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Run setup wizard (interactive)
+node setup.js
+
+# 3. Start monitoring
+npm start
+```
+
+That's it! You'll receive emails when courts become available at your target times.
+
 ## Features
 
 - 🎾 Monitors tennis court availability at Rothof München via Eversports API
@@ -11,6 +26,17 @@ Monitors court availability at Rothof München and sends email notifications whe
 - 🎯 Only notifies about newly available slots (no spam)
 
 ## Setup
+
+### Quick Setup (Recommended)
+
+Run the interactive setup wizard:
+```bash
+node setup.js
+```
+
+This will guide you through email configuration and monitoring preferences.
+
+### Manual Setup
 
 1. **Install dependencies:**
    ```bash
@@ -38,9 +64,16 @@ Monitors court availability at Rothof München and sends email notifications whe
 
 ## Usage
 
-**Run the monitor:**
+**Start monitoring:**
 ```bash
+npm start
+# or
 node index.js
+```
+
+**Test API connection (optional):**
+```bash
+npm test
 ```
 
 The monitor will:
